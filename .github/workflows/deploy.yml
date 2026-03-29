@@ -16,30 +16,35 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            set -e   # stop script on real errors
+            set -e
 
+            echo "📂 Moving to project directory..."
             cd /home/ubuntu/nit/dops-1
 
+            echo "⬇️ Pulling latest code..."
             git pull origin main
 
-            # Install only if missing (faster deploys)
+            echo "🐍 Checking Python dependencies..."
             if ! dpkg -s python3.12-venv >/dev/null 2>&1; then
               sudo apt update
               sudo apt install -y python3.12-venv python3-pip
             fi
 
-            # Create venv if not exists
+            echo "📦 Setting up virtual environment..."
             if [ ! -d "venv" ]; then
               python3 -m venv venv
             fi
 
             source venv/bin/activate
 
+            echo "⬆️ Installing dependencies..."
             pip install --upgrade pip
             pip install -r requirements.txt
 
-            # Stop old process safely
-            pkill -f "uvicorn app:app" || true
+            echo "🛑 Stopping old FastAPI process..."
+            ps aux | grep "uvicorn app:app" | grep -v grep | awk '{print $2}' | xargs -r kill
 
-            # Start new process
+            echo "🚀 Starting FastAPI server..."
             nohup uvicorn app:app --host 0.0.0.0 --port 8000 > log.txt 2>&1 &
+
+            echo "✅ Deployment completed!"
