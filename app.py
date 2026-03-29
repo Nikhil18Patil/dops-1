@@ -12,7 +12,7 @@ def read_root():
 
 @app.get('/hello')
 def read_hello():
-    return {"message": "Hello World"}
+    return {"message": "Nikhil Patil"}
 
 
 if __name__ == "__main__":
